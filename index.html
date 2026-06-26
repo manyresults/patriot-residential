@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REI Marketing Funnel</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --bg: #f9f8f6;
+    --surface: #ffffff;
+    --text: #1c1c1a;
+    --muted: #6b6b66;
+    --radius: 10px;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 28px 16px 80px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -.01em;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .funnel {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .stage-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  .stage-section {
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 6px;
+  }
+
+  .node {
+    border-radius: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    border: 1.5px solid transparent;
+    min-width: 110px;
+    text-align: center;
+    user-select: none;
+  }
+
+  .node:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.12); }
+  .node:active { transform: scale(.97); }
+
+  .n-title { font-size: 12px; font-weight: 600; line-height: 1.35; }
+  .n-sub   { font-size: 10.5px; margin-top: 2px; line-height: 1.35; opacity: .78; }
+
+  .group-box {
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1.5px solid transparent;
+    flex: 1;
+  }
+
+  .group-title {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .group-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .lp-node {
+    border-radius: 12px;
+    padding: 12px 24px;
+    text-align: center;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    max-width: 320px;
+    margin: 0 auto;
+    user-select: none;
+  }
+
+  .lp-node:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.14); }
+
+  /* Arrow connector */
+  .arrow-down {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 4px 0;
+    gap: 0;
+  }
+  .arrow-shaft {
+    width: 2px;
+    height: 14px;
+    opacity: .45;
+  }
+  .arrow-head {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    opacity: .6;
+  }
+
+  /* Stage colors */
+  .tofu-bg    { background: #fef3c7; border-color: #d97706; color: #78350f; }
+  .tofu-group { background: #fffbeb; border-color: #fcd34d; color: #78350f; }
+  .tofu-label { background: #fde68a; color: #78350f; }
+
+  .mofu-bg    { background: #dbeafe; border-color: #2563eb; color: #1e3a8a; }
+  .mofu-label { background: #bfdbfe; color: #1e3a8a; }
+
+  .bofu-bg    { background: #dcfce7; border-color: #16a34a; color: #14532d; }
+  .bofu-label { background: #bbf7d0; color: #14532d; }
+
+  .close-bg    { background: #f3e8ff; border-color: #9333ea; color: #581c87; }
+  .close-label { background: #e9d5ff; color: #581c87; }
+
+  .asset-bg    { background: #ffe4e6; border-color: #e11d48; color: #881337; }
+  .asset-label { background: #fecdd3; color: #881337; }
+
+  /* Info panel */
+  .info-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.18);
+    z-index: 50;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .info-overlay.open { display: flex; }
+
+  .info-panel {
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px 32px;
+    width: 100%;
+    max-width: 680px;
+    border-top: 3px solid #e5e5e0;
+    animation: slideUp .2s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .info-stage-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+    display: inline-block;
+  }
+
+  .info-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  .info-close {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .info-body {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  /* Color overrides for info panel border */
+  .info-tofu  { border-top-color: #d97706; }
+  .info-asset { border-top-color: #e11d48; }
+  .info-mofu  { border-top-color: #2563eb; }
+  .info-bofu  { border-top-color: #16a34a; }
+  .info-close-c { border-top-color: #9333ea; }
+
+  .badge-tofu  { background: #fde68a; color: #78350f; }
+  .badge-asset { background: #fecdd3; color: #881337; }
+  .badge-mofu  { background: #bfdbfe; color: #1e3a8a; }
+  .badge-bofu  { background: #bbf7d0; color: #14532d; }
+  .badge-close { background: #e9d5ff; color: #581c87; }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    opacity: .7;
+  }
+
+  .liveboard-btn {
+    display: block;
+    max-width: 680px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .liveboard-btn a {
+    display: inline-block;
+    padding: 8px 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1c1c1a;
+    background: #fff;
+    border: 1.5px solid #d1d1cc;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+
+  .liveboard-btn a:hover {
+    background: #f0efed;
+    border-color: #999;
+  }
+
+  @media (min-width: 520px) {
+    .group-box { min-width: 140px; max-width: 210px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="liveboard-btn" style="margin-bottom:16px">
+  <a href="https://agencynearme.notion.site/Patriot-Property-Buyer-Agency-Liveboard-3494087b0f70802e83a4e54c131b2ce3?pvs=74" target="_top">&#8592; Back to Liveboard</a>
+</div>
+
+<div class="funnel">
+  <h1>REI Marketing Funnel</h1>
+  <p class="subtitle">Estate Sales &amp; Inherited Property — Tap any node to learn more</p>
+  <p class="hint">↓ Tap any box for details</p>
+
+  <!-- TOFU -->
+  <div class="stage-section">
+    <span class="stage-label tofu-label">🟡 TOFU — Awareness &amp; Acquisition</span>
+    <div class="row">
+
+      <div class="group-box tofu-group">
+        <div class="group-title">📣 Meta Ads</div>
+        <div class="group-inner">
+          <div class="node tofu-bg" onclick="show('meta-lm')">
+            <div class="n-title">Lead Magnet</div><div class="n-sub">Probate Guide</div>
+          </div>
+          <div class="node tofu-bg" onclick="show('meta-vsl')">
+            <div class="n-title">Cold Audience</div><div class="n-sub">VSL Hook</div>
+          </div>
+          <div class="node tofu-bg" onclick="show('meta-rt')">
+            <div class="n-title">Retargeting</div><div class="n-sub">Site + Sheets list</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-box tofu-group">
+        <div class="group-title">🔎 Google Ads</div>
+        <div class="group-inner">
+          <div class="node tofu-bg" onclick="show('goog-cold')">
+            <div class="n-title">Cold Search</div><div class="n-sub">Intent keywords</div>
+          </div>
+          <div class="node tofu-bg" onclick="show('goog-rt')">
+            <div class="n-title">Retargeting</div><div class="n-sub">GDN / RLSA</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-box tofu-group">
+        <div class="group-title">📡 PropStream Outbound</div>
+        <div class="group-inner">
+          <div class="node tofu-bg" onclick="show('propstream')">
+            <div class="n-title">PropStream List</div><div class="n-sub">+ Skip Trace</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div class="node tofu-bg" onclick="show('email')" style="flex:1">
+              <div class="n-title">📧 Cold Email</div><div class="n-sub">GHL</div>
+            </div>
+            <div class="node tofu-bg" onclick="show('revamp')" style="flex:1">
+              <div class="n-title">☎️ Revamp</div><div class="n-sub">Sarah · Call+SMS</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-down">
+    <div class="arrow-shaft" style="background:#e11d48"></div>
+    <div class="arrow-head" style="border-top:7px solid #e11d48"></div>
+  </div>
+
+  <!-- VSL ASSET -->
+  <div class="stage-section">
+    <span class="stage-label asset-label">🎬 Asset</span><br>
+    <div class="lp-node asset-bg" onclick="show('vsl')">
+      <div class="n-title" style="font-size:13px">VSL + Landing Page</div>
+      <div class="n-sub" style="font-size:11.5px">Estate Sales / Inherited Property</div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-down">
+    <div class="arrow-shaft" style="background:#2563eb"></div>
+    <div class="arrow-head" style="border-top:7px solid #2563eb"></div>
+  </div>
+
+  <!-- MOFU -->
+  <div class="stage-section">
+    <span class="stage-label mofu-label">🔵 MOFU — Contact &amp; Qualify</span>
+    <div class="row" style="margin-top:8px">
+      <div class="node mofu-bg" onclick="show('sarah')" style="min-width:175px">
+        <div class="n-title">👩 Sarah Bennet · Revamp AI</div>
+        <div class="n-sub">📞 856-387-6632</div>
+      </div>
+      <div class="node mofu-bg" onclick="show('qualify')" style="min-width:195px">
+        <div class="n-title">✅ Qualifying — 4 Cs</div>
+        <div class="n-sub">Condition · Title · Cause · Calendar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-down">
+    <div class="arrow-shaft" style="background:#16a34a"></div>
+    <div class="arrow-head" style="border-top:7px solid #16a34a"></div>
+  </div>
+
+  <!-- BOFU -->
+  <div class="stage-section">
+    <span class="stage-label bofu-label">🟢 BOFU — Offer &amp; Close</span>
+    <div class="row" style="margin-top:8px">
+      <div class="node bofu-bg" onclick="show('walk')" style="min-width:130px">
+        <div class="n-title">🏠 Property Walk</div><div class="n-sub">or Virtual Tour</div>
+      </div>
+      <div class="node bofu-bg" onclick="show('offer')" style="min-width:130px">
+        <div class="n-title">💰 Cash Offer</div><div class="n-sub">Presented</div>
+      </div>
+      <div class="node bofu-bg" onclick="show('contract')" style="min-width:130px">
+        <div class="n-title">✍️ Contract</div><div class="n-sub">Signed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrow -->
+  <div class="arrow-down">
+    <div class="arrow-shaft" style="background:#9333ea"></div>
+    <div class="arrow-head" style="border-top:7px solid #9333ea"></div>
+  </div>
+
+  <!-- CLOSE -->
+  <div class="stage-section">
+    <span class="stage-label close-label">🟣 Close &amp; Disposition</span>
+    <div class="row" style="margin-top:8px">
+      <div class="node close-bg" onclick="show('title')" style="min-width:155px">
+        <div class="n-title">📜 Title + Probate</div><div class="n-sub">Coordination</div>
+      </div>
+      <div class="node close-bg" onclick="show('close-fund')" style="min-width:155px">
+        <div class="n-title">🏁 Close · Fund · Dispo</div><div class="n-sub">Final step</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="liveboard-btn" style="margin-top:20px">
+  <a href="https://agencynearme.notion.site/Patriot-Property-Buyer-Agency-Liveboard-3494087b0f70802e83a4e54c131b2ce3?pvs=74" target="_top">&#8592; Back to Liveboard</a>
+</div>
+
+<!-- INFO OVERLAY -->
+<div class="info-overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="info-panel" id="info-panel">
+    <div id="info-badge-wrap"></div>
+    <div class="info-header">
+      <div class="info-title" id="info-title"></div>
+      <button class="info-close" onclick="closeInfo()">✕</button>
+    </div>
+    <div class="info-body" id="info-body"></div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  'meta-lm':    {stage:'TOFU',sc:'tofu', t:'Meta — Lead Magnet Ad',         b:'Cold traffic targeting probate attorneys, estate sale searchers, and inherited homeowners. The Probate Guide pre-qualifies intent and captures contact info before the VSL.'},
+  'meta-vsl':   {stage:'TOFU',sc:'tofu', t:'Meta — Cold Audience VSL Hook',  b:'Short-form video ad targeting cold audiences. Opens a loop around the pain of managing inherited property, then drives to the VSL landing page for the full story.'},
+  'meta-rt':    {stage:'TOFU',sc:'tofu', t:'Meta — Retargeting',             b:'Retargets website visitors and imported lists (motivated seller sheets). Warmer audience, lower CPL. Timed sequences follow the 3–5 day buying window for distressed sellers.'},
+  'goog-cold':  {stage:'TOFU',sc:'tofu', t:'Google — Cold Search',           b:'High-intent search terms: "sell inherited house fast," "probate property buyer," "cash offer estate sale." Bottom-of-funnel search intent from people already in motion.'},
+  'goog-rt':    {stage:'TOFU',sc:'tofu', t:'Google — GDN / RLSA Retargeting',b:'Display retargeting on Google network plus RLSA layered on top of cold search campaigns. Maintains brand visibility across the research cycle.'},
+  'propstream': {stage:'TOFU',sc:'tofu', t:'PropStream List + Skip Trace',   b:'Pull targeted lists from PropStream: probate filings, pre-foreclosure, absentee owners, code violations. Skip trace to get direct contact data before outreach.'},
+  'email':      {stage:'TOFU',sc:'tofu', t:'Cold Email via GHL',             b:'Automated outbound email sequences via GoHighLevel. 5-touch sequence hitting pain points: time burden, cost of carrying the property, no-hassle cash offer.'},
+  'revamp':     {stage:'TOFU',sc:'tofu', t:'Revamp AI — Sarah (Call + SMS)', b:'Revamp AI handles outbound calling and SMS follow-up from the PropStream list. Sarah Bennet is the AI voice agent at 856-387-6632. Runs parallel to email for multi-touch coverage.'},
+  'vsl':        {stage:'Asset',sc:'asset',t:'VSL + Landing Page',            b:'All TOFU traffic converges here. The Video Sales Letter speaks directly to the inherited / estate sale niche. 3-field opt-in captures name, phone, and property address. No long intake forms.'},
+  'sarah':      {stage:'MOFU',sc:'mofu', t:'Sarah Bennet — Revamp AI',       b:'AI-powered voice agent at 856-387-6632 handles initial inbound contact from the landing page and outbound from PropStream lists. Qualifies leads before human handoff.'},
+  'qualify':    {stage:'MOFU',sc:'mofu', t:'Qualifying Framework — 4 Cs',    b:'Condition: property state and needed repairs. Title: clean, probate, or liens present. Cause: why they\'re selling (urgency driver). Calendar: their timeline to close. All four determine offer viability.'},
+  'walk':       {stage:'BOFU',sc:'bofu', t:'Property Walk or Virtual Tour',  b:'In-person walkthrough or video tour for remote sellers. Used to finalize ARV, confirm repair cost estimate, and validate condition from the qualifying call.'},
+  'offer':      {stage:'BOFU',sc:'bofu', t:'Cash Offer Presented',           b:'Based on ARV minus repairs minus margin. Offer is presented on the call or in person. Follows the walk within 24–48 hours to maintain momentum and urgency.'},
+  'contract':   {stage:'BOFU',sc:'bofu', t:'Contract Signed',                b:'Purchase agreement executed. Triggers title search, probate coordination if applicable, and earnest money deposit. Clock starts on the inspection period.'},
+  'title':      {stage:'Close',sc:'close-c',t:'Title + Probate Coordination',b:'Title company clears liens, judgments, and ownership chain. For probate properties, coordinates with the estate attorney on court approval timeline before close.'},
+  'close-fund': {stage:'Close',sc:'close-c',t:'Close · Fund · Dispo',        b:'Final close at title. Funds wire on HUD approval. Disposition: assign to end buyer, JV partner, or hold depending on strategy. Profit captured at funding.'},
+};
+
+const badgeClass = {tofu:'badge-tofu',asset:'badge-asset',mofu:'badge-mofu',bofu:'badge-bofu','close-c':'badge-close'};
+const panelClass = {tofu:'info-tofu',asset:'info-asset',mofu:'info-mofu',bofu:'info-bofu','close-c':'info-close-c'};
+
+function show(id) {
+  const d = DATA[id];
+  if (!d) return;
+  const panel = document.getElementById('info-panel');
+  panel.className = 'info-panel ' + (panelClass[d.sc] || '');
+  document.getElementById('info-badge-wrap').innerHTML =
+    `<span class="info-stage-badge ${badgeClass[d.sc]||''}">${d.stage}</span>`;
+  document.getElementById('info-title').textContent = d.t;
+  document.getElementById('info-body').textContent  = d.b;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closeInfo() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeInfo();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
+</script>
+</body>
+</html>
